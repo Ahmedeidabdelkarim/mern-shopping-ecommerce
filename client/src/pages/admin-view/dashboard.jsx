@@ -1,6 +1,10 @@
 import ProductImageUpload from "@/components/admin-view/image-upload";
 import { Button } from "@/components/ui/button";
-import { addFeatureImage, getFeatureImages, deleteFeatureImage } from "@/store/common-slice";
+import {
+  addFeatureImage,
+  getFeatureImages,
+  deleteFeatureImage,
+} from "@/store/common-slice";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -8,20 +12,28 @@ function AdminDashboard() {
   const [imageFile, setImageFile] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [imageLoadingState, setImageLoadingState] = useState(false);
+
   const dispatch = useDispatch();
-  const { featureImageList } = useSelector((state) => state.commonFeature);
 
-  console.log(uploadedImageUrl, "uploadedImageUrl");
+  const { featureImageList } = useSelector(
+    (state) => state.commonFeature
+  );
 
-  function handleUploadFeatureImage() {
+  // This runs after Cloudinary upload succeeds
+  useEffect(() => {
+    if (!uploadedImageUrl) return;
+
     dispatch(addFeatureImage(uploadedImageUrl)).then((data) => {
       if (data?.payload?.success) {
+        // Get updated images from database
         dispatch(getFeatureImages());
+
+        // Reset upload component
         setImageFile(null);
         setUploadedImageUrl("");
       }
     });
-  }
+  }, [uploadedImageUrl, dispatch]);
 
   function handleDeleteFeatureImage(id) {
     dispatch(deleteFeatureImage(id)).then((data) => {
@@ -35,10 +47,8 @@ function AdminDashboard() {
     dispatch(getFeatureImages());
   }, [dispatch]);
 
-  console.log(featureImageList, "featureImageList");
-
   return (
-    <div>
+    <div className="p-6">
       <ProductImageUpload
         imageFile={imageFile}
         setImageFile={setImageFile}
@@ -47,30 +57,31 @@ function AdminDashboard() {
         setImageLoadingState={setImageLoadingState}
         imageLoadingState={imageLoadingState}
         isCustomStyling={true}
-        // isEditMode={currentEditedId !== null}
       />
-    
-      <div className="flex flex-col gap-4 mt-5">
-        {featureImageList && featureImageList.length > 0
-          ? featureImageList.map((featureImgItem) => (
-              <div className="relative" key={featureImgItem._id}>
 
-              <div key={featureImgItem._id} className="relative group">
+      {/* All feature images */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+        {featureImageList?.map((featureImgItem) => (
+          <div
+            key={featureImgItem._id}
+            className="relative group"
+          >
+            <img
+              src={featureImgItem.image}
+              alt="Feature"
+              className="w-full h-[250px] object-cover rounded-lg"
+            />
 
-                <img
-                  src={featureImgItem.image}
-                  className="w-full h-[300px] object-cover rounded-t-lg"
-                />
-                <Button 
-                  onClick={() => handleDeleteFeatureImage(featureImgItem._id)}
-                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                >
-                  Delete
-                </Button>
-              </div>
-              </div>
-            ))
-          : null}
+            <Button
+              onClick={() =>
+                handleDeleteFeatureImage(featureImgItem._id)
+              }
+              className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              Delete
+            </Button>
+          </div>
+        ))}
       </div>
     </div>
   );
