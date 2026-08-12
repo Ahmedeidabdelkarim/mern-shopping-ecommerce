@@ -10,7 +10,7 @@ export const getFeatureImages = createAsyncThunk(
   "/order/getFeatureImages",
   async () => {
     const response = await axios.get(
-      `${import.meta.env.BASE_URL}/api/common/feature/get`
+      `${import.meta.env.VITE_BASE_URL}/api/common/feature/get`
     );
 
     return response.data;
@@ -21,8 +21,19 @@ export const addFeatureImage = createAsyncThunk(
   "/order/addFeatureImage",
   async (image) => {
     const response = await axios.post(
-      `${import.meta.env.BASE_URL}/api/common/feature/add`,
+      `${import.meta.env.VITE_BASE_URL}/api/common/feature/add`,
       { image }
+    );
+
+    return response.data;
+  }
+);
+
+export const deleteFeatureImage = createAsyncThunk(
+  "/order/deleteFeatureImage",
+  async (id) => {
+    const response = await axios.delete(
+      `${import.meta.env.VITE_BASE_URL}/api/common/feature/delete/${id}`
     );
 
     return response.data;

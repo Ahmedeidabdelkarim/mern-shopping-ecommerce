@@ -62,7 +62,18 @@ function ProductImageUpload({
   }
 
   async function uploadImageToCloudinary() {
+<<<<<<< HEAD
     if (!imageFile) return;
+=======
+    setImageLoadingState(true);
+    const data = new FormData();
+    data.append("my_file", imageFile);
+    const response = await axios.post(
+      "http://localhost:5000/api/admin/products/upload-image",
+      data
+    );
+    console.log(response, "response");
+>>>>>>> cbda996d1c586ba74014a82ca5a92d79398962d2
 
     try {
       setImageLoadingState(true);
