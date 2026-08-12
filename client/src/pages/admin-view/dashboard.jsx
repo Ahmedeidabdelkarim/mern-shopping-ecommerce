@@ -53,11 +53,10 @@ function AdminDashboard() {
       <div className="flex flex-col gap-4 mt-5">
         {featureImageList && featureImageList.length > 0
           ? featureImageList.map((featureImgItem) => (
-<<<<<<< HEAD
               <div className="relative" key={featureImgItem._id}>
-=======
+
               <div key={featureImgItem._id} className="relative group">
->>>>>>> cbda996d1c586ba74014a82ca5a92d79398962d2
+
                 <img
                   src={featureImgItem.image}
                   className="w-full h-[300px] object-cover rounded-t-lg"
@@ -68,6 +67,7 @@ function AdminDashboard() {
                 >
                   Delete
                 </Button>
+              </div>
               </div>
             ))
           : null}
