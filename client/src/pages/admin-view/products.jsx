@@ -52,7 +52,7 @@ function AdminProducts() {
           editProduct({
             id: currentEditedId,
             formData,
-          })
+          }),
         ).then((data) => {
           console.log(data, "edit");
 
@@ -67,7 +67,7 @@ function AdminProducts() {
           addNewProduct({
             ...formData,
             image: uploadedImageUrl,
-          })
+          }),
         ).then((data) => {
           if (data?.payload?.success) {
             dispatch(fetchAllProducts());
@@ -113,11 +113,15 @@ function AdminProducts() {
         {productList && productList.length > 0
           ? productList.map((productItem) => (
               <AdminProductTile
+                key={productItem._id}
                 setFormData={setFormData}
                 setOpenCreateProductsDialog={setOpenCreateProductsDialog}
                 setCurrentEditedId={setCurrentEditedId}
                 product={productItem}
                 handleDelete={handleDelete}
+                /*update*/ 
+                setUploadedImageUrl={setUploadedImageUrl}
+                setImageFile={setImageFile}
               />
             ))
           : null}

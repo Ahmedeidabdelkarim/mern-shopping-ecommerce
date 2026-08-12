@@ -1,10 +1,9 @@
-import { FileIcon, UploadCloudIcon, XIcon } from "lucide-react";
+import { UploadCloudIcon, XIcon, Loader2 } from "lucide-react";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import axios from "axios";
-import { Skeleton } from "../ui/skeleton";
 
 function ProductImageUpload({
   imageFile,
@@ -16,16 +15,30 @@ function ProductImageUpload({
   isEditMode,
   isCustomStyling = false,
 }) {
-  const inputRef = useRef(null);
+  const [previewUrl, setPreviewUrl] = useState("");
 
-  console.log(isEditMode, "isEditMode");
+  // Create a local preview immediately after selecting an image.
+  useEffect(() => {
+    if (!imageFile) {
+      setPreviewUrl("");
+      return;
+    }
+
+    const url = URL.createObjectURL(imageFile);
+    setPreviewUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [imageFile]);
 
   function handleImageFileChange(event) {
-    console.log(event.target.files, "event.target.files");
     const selectedFile = event.target.files?.[0];
-    console.log(selectedFile);
 
-    if (selectedFile) setImageFile(selectedFile);
+    if (selectedFile) {
+      setImageFile(selectedFile);
+      setUploadedImageUrl("");
+    }
   }
 
   function handleDragOver(event) {
@@ -34,42 +47,57 @@ function ProductImageUpload({
 
   function handleDrop(event) {
     event.preventDefault();
+
     const droppedFile = event.dataTransfer.files?.[0];
-    if (droppedFile) setImageFile(droppedFile);
+
+    if (droppedFile) {
+      setImageFile(droppedFile);
+      setUploadedImageUrl("");
+    }
   }
 
   function handleRemoveImage() {
     setImageFile(null);
-    if (inputRef.current) {
-      inputRef.current.value = "";
-    }
+    setUploadedImageUrl("");
   }
 
   async function uploadImageToCloudinary() {
-    setImageLoadingState(true);
-    const data = new FormData();
-    data.append("my_file", imageFile);
-    const response = await axios.post(
-      "http://localhost:500/api/admin/products/upload-image",
-      data
-    );
-    console.log(response, "response");
+    if (!imageFile) return;
 
-    if (response?.data?.success) {
-      setUploadedImageUrl(response.data.result.url);
+    try {
+      setImageLoadingState(true);
+
+      const data = new FormData();
+      data.append("my_file", imageFile);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/admin/products/upload-image`,
+        data,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response?.data?.success) {
+        setUploadedImageUrl(response.data.result.url);
+      }
+    } catch (error) {
+      console.error("Image upload failed:", error);
+    } finally {
       setImageLoadingState(false);
     }
   }
 
-  useEffect(() => {
-    if (imageFile !== null) uploadImageToCloudinary();
-  }, [imageFile]);
-
   return (
     <div
-      className={`w-full  mt-4 ${isCustomStyling ? "" : "max-w-md mx-auto"}`}
+      className={`w-full mt-4 ${
+        isCustomStyling ? "" : "max-w-md mx-auto"
+      }`}
     >
-      <Label className="text-lg font-semibold mb-2 block">Upload Image</Label>
+      <Label className="text-lg font-semibold mb-2 block">
+        Upload Image
+      </Label>
+
       <div
         onDragOver={handleDragOver}
         onDrop={handleDrop}
@@ -81,10 +109,11 @@ function ProductImageUpload({
           id="image-upload"
           type="file"
           className="hidden"
-          ref={inputRef}
           onChange={handleImageFileChange}
-          disabled={isEditMode}
+          disabled={isEditMode || imageLoadingState}
+          accept="image/*"
         />
+
         {!imageFile ? (
           <Label
             htmlFor="image-upload"
@@ -95,24 +124,48 @@ function ProductImageUpload({
             <UploadCloudIcon className="w-10 h-10 text-muted-foreground mb-2" />
             <span>Drag & drop or click to upload image</span>
           </Label>
-        ) : imageLoadingState ? (
-          <Skeleton className="h-10 bg-gray-100" />
         ) : (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <FileIcon className="w-8 text-primary mr-2 h-8" />
+          <>
+            {/* Show the selected image immediately using a local preview. */}
+            <div className="relative">
+              <img
+                src={uploadedImageUrl || previewUrl}
+                alt="Product preview"
+                className="w-full h-48 object-contain rounded-lg"
+              />
+
+              {!imageLoadingState && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 bg-white"
+                  onClick={handleRemoveImage}
+                >
+                  <XIcon className="w-4 h-4" />
+                </Button>
+              )}
             </div>
-            <p className="text-sm font-medium">{imageFile.name}</p>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={handleRemoveImage}
-            >
-              <XIcon className="w-4 h-4" />
-              <span className="sr-only">Remove File</span>
-            </Button>
-          </div>
+
+            {/* Upload only when the user clicks the button. */}
+            {!uploadedImageUrl && (
+              <Button
+                type="button"
+                className="w-full mt-4"
+                onClick={uploadImageToCloudinary}
+                disabled={imageLoadingState}
+              >
+                {imageLoadingState ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload"
+                )}
+              </Button>
+            )}
+          </>
         )}
       </div>
     </div>
