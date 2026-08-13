@@ -28,26 +28,10 @@ mongoose
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-const allowedOrigins = [
-  "https://mern-shopping-ecommerce-qdwn.vercel.app/",
-  "http://localhost:5173",
-];
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests without an origin
-      // such as Postman/server-to-server requests
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("Not allowed by CORS"));
-    },
+    origin: true,
     methods: ["GET", "POST", "DELETE", "PUT"],
     allowedHeaders: [
       "Content-Type",
