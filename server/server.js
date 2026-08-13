@@ -28,9 +28,20 @@ mongoose
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const allowedOrigins = [
+  "https://mern-shopping-ecommerce-git-4b90a1-ahmed-eids-projects-40e58032.vercel.app",
+  "https://mern-shopping-ecommerce-qdwn-b6vy5rse0.vercel.app",
+  "http://localhost:5173",
+];
 app.use(
   cors({
-    origin: process.env.VITE_CLIENT_URL,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "DELETE", "PUT"],
     allowedHeaders: [
       "Content-Type",
