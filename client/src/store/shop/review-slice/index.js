@@ -12,7 +12,8 @@ export const addReview = createAsyncThunk(
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_URL}/api/shop/review/add`,
-        formData
+        formData,
+        { withCredentials: true }
       );
 
       return response.data;
@@ -40,6 +41,7 @@ export const deleteReview = createAsyncThunk(
   async (reviewId) => {
     const response = await axios.delete(
       `${import.meta.env.VITE_BASE_URL}/api/shop/review/${reviewId}`,
+      { withCredentials: true }
     );
     return response.data;
   }
