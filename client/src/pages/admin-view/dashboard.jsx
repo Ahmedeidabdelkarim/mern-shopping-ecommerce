@@ -69,7 +69,7 @@ function AdminDashboard() {
             <img
               src={featureImgItem.image}
               alt="Feature"
-              className="w-full h-[250px] object-cover rounded-lg"
+              className="w-full h-[250px] object-fill rounded-lg"
             />
 
             <Button
