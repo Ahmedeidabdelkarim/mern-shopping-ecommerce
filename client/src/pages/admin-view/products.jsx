@@ -3,6 +3,14 @@ import AdminProductTile from "@/components/admin-view/product-tile";
 import CommonForm from "@/components/common/form";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -39,6 +47,7 @@ function AdminProducts() {
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [imageLoadingState, setImageLoadingState] = useState(false);
   const [currentEditedId, setCurrentEditedId] = useState(null);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   const { productList } = useSelector((state) => state.adminProducts);
   const dispatch = useDispatch();
@@ -89,6 +98,10 @@ function AdminProducts() {
     });
   }
 
+  function requestProductDelete(productId) {
+    setProductToDelete(productId);
+  }
+
   function isFormValid() {
     return Object.keys(formData)
       .filter((currentKey) => currentKey !== "averageReview")
@@ -118,7 +131,7 @@ function AdminProducts() {
                 setOpenCreateProductsDialog={setOpenCreateProductsDialog}
                 setCurrentEditedId={setCurrentEditedId}
                 product={productItem}
-                handleDelete={handleDelete}
+                handleDelete={requestProductDelete}
                 /*update*/ 
                 setUploadedImageUrl={setUploadedImageUrl}
                 setImageFile={setImageFile}
@@ -126,6 +139,39 @@ function AdminProducts() {
             ))
           : null}
       </div>
+      <Dialog
+        open={Boolean(productToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setProductToDelete(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete product?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this product? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setProductToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                handleDelete(productToDelete);
+                setProductToDelete(null);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Sheet
         open={openCreateProductsDialog}
         onOpenChange={() => {

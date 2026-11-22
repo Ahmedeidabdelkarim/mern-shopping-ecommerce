@@ -1,6 +1,14 @@
 import ProductImageUpload from "@/components/admin-view/image-upload";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   addFeatureImage,
   getFeatureImages,
   deleteFeatureImage,
@@ -12,6 +20,7 @@ function AdminDashboard() {
   const [imageFile, setImageFile] = useState(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [imageLoadingState, setImageLoadingState] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState(null);
 
   const dispatch = useDispatch();
 
@@ -73,9 +82,7 @@ function AdminDashboard() {
             />
 
             <Button
-              onClick={() =>
-                handleDeleteFeatureImage(featureImgItem._id)
-              }
+              onClick={() => setImageToDelete(featureImgItem._id)}
               className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               Delete
@@ -83,6 +90,39 @@ function AdminDashboard() {
           </div>
         ))}
       </div>
+      <Dialog
+        open={Boolean(imageToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setImageToDelete(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete image?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this image? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setImageToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                handleDeleteFeatureImage(imageToDelete);
+                setImageToDelete(null);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
