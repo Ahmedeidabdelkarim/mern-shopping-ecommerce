@@ -8,13 +8,23 @@ const initialState = {
 
 export const addReview = createAsyncThunk(
   "/order/addReview",
-  async (formdata) => {
-    const response = await axios.post(
-      `${import.meta.env.VITE_BASE_URL}/api/shop/review/add`,
-      formdata
-    );
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/shop/review/add`,
+        formData,
+        { withCredentials: true }
+      );
 
-    return response.data;
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data || {
+          success: false,
+          message: error.message || "Unable to add review.",
+        }
+      );
+    }
   }
 );
 
@@ -25,6 +35,17 @@ export const getReviews = createAsyncThunk("/order/getReviews", async (id) => {
 
   return response.data;
 });
+
+export const deleteReview = createAsyncThunk(
+  "/order/deleteReview",
+  async (reviewId) => {
+    const response = await axios.delete(
+      `${import.meta.env.VITE_BASE_URL}/api/shop/review/${reviewId}`,
+      { withCredentials: true }
+    );
+    return response.data;
+  }
+);
 
 const reviewSlice = createSlice({
   name: "reviewSlice",
@@ -51,6 +72,18 @@ const reviewSlice = createSlice({
         state.reviews.push(action.payload.data);
       })
       .addCase(addReview.rejected, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(deleteReview.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(deleteReview.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.reviews = state.reviews.filter(
+          (review) => review._id !== action.payload.data._id
+        );
+      })
+      .addCase(deleteReview.rejected, (state) => {
         state.isLoading = false;
       });
   },

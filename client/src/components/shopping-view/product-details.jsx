@@ -11,11 +11,16 @@ import { setProductDetails } from "@/store/shop/products-slice";
 import { Label } from "../ui/label";
 import StarRatingComponent from "../common/star-rating";
 import { useEffect, useState } from "react";
-import { addReview, getReviews } from "@/store/shop/review-slice";
+import {
+  addReview,
+  deleteReview,
+  getReviews,
+} from "@/store/shop/review-slice";
 
 function ProductDetailsDialog({ open, setOpen, productDetails }) {
   const [reviewMsg, setReviewMsg] = useState("");
   const [rating, setRating] = useState(0);
+  const [isAddingReview, setIsAddingReview] = useState(false);
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { cartItems } = useSelector((state) => state.shopCart);
@@ -71,22 +76,53 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
     setReviewMsg("");
   }
 
-  function handleAddReview() {
-    dispatch(
-      addReview({
-        productId: productDetails?._id,
-        userId: user?.id,
-        userName: user?.userName,
-        reviewMessage: reviewMsg,
-        reviewValue: rating,
-      })
-    ).then((data) => {
+  async function handleAddReview() {
+    if (!reviewMsg.trim() || rating < 1 || rating > 5) return;
+
+    setIsAddingReview(true);
+    try {
+      const result = await dispatch(
+        addReview({
+          productId: productDetails?._id,
+          reviewMessage: reviewMsg.trim(),
+          reviewValue: rating,
+        })
+      ).unwrap();
+
+      if (!result?.success) {
+        toast({
+          title: result?.message || "Unable to add review.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setRating(0);
+      setReviewMsg("");
+      dispatch(getReviews(productDetails?._id));
+      toast({
+        title: "Review added successfully!",
+      });
+    } catch (error) {
+      toast({
+        title:
+          error?.message ||
+          error?.response?.data?.message ||
+          "Unable to add review.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAddingReview(false);
+    }
+  }
+
+  function handleDeleteReview(reviewId) {
+    // Dispatch an action to delete the review
+    dispatch(deleteReview(reviewId)).then((data) => {
       if (data.payload.success) {
-        setRating(0);
-        setReviewMsg("");
         dispatch(getReviews(productDetails?._id));
         toast({
-          title: "Review added successfully!",
+          title: "Review deleted successfully!",
         });
       }
     });
@@ -187,6 +223,16 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
                         {reviewItem.reviewMessage}
                       </p>
                     </div>
+                    {reviewItem?.userId === user?.id ? (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="ml-auto"
+                          onClick={() => handleDeleteReview(reviewItem._id)}
+                        >
+                          Delete
+                        </Button>
+                      ) : null}
                   </div>
                 ))
               ) : (
@@ -209,9 +255,11 @@ function ProductDetailsDialog({ open, setOpen, productDetails }) {
               />
               <Button
                 onClick={handleAddReview}
-                disabled={reviewMsg.trim() === ""}
+                disabled={
+                  isAddingReview || reviewMsg.trim() === "" || rating === 0
+                }
               >
-                Submit
+                {isAddingReview ? "Submitting..." : "Submit"}
               </Button>
             </div>
           </div>

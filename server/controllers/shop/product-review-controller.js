@@ -4,8 +4,22 @@ const ProductReview = require("../../models/Review");
 
 const addProductReview = async (req, res) => {
   try {
-    const { productId, userId, userName, reviewMessage, reviewValue } =
-      req.body;
+    const { productId, reviewMessage, reviewValue } = req.body;
+    const userId = req.user.id;
+    const userName = req.user.userName;
+
+    if (
+      typeof reviewMessage !== "string" ||
+      !reviewMessage.trim() ||
+      !Number.isInteger(Number(reviewValue)) ||
+      Number(reviewValue) < 1 ||
+      Number(reviewValue) > 5
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "A review message and rating from 1 to 5 are required.",
+      });
+    }
 
     const order = await Order.findOne({
       userId,
@@ -36,8 +50,8 @@ const addProductReview = async (req, res) => {
       productId,
       userId,
       userName,
-      reviewMessage,
-      reviewValue,
+      reviewMessage: reviewMessage.trim(),
+      reviewValue: Number(reviewValue),
     });
 
     await newReview.save();
@@ -81,4 +95,40 @@ const getProductReviews = async (req, res) => {
   }
 };
 
-module.exports = { addProductReview, getProductReviews };
+const deleteProductReview = async (req, res) => {
+  try {
+    const review = await ProductReview.findOneAndDelete({
+      _id: req.params.reviewId,
+      userId: req.user.id,
+    });
+
+    if (!review) {
+      return res.status(404).json({
+        success: false,
+        message: "Review not found.",
+      });
+    }
+
+    const reviews = await ProductReview.find({ productId: review.productId });
+    const averageReview =
+      reviews.length > 0
+        ? reviews.reduce((sum, item) => sum + item.reviewValue, 0) /
+          reviews.length
+        : 0;
+
+    await Product.findByIdAndUpdate(review.productId, { averageReview });
+
+    return res.status(200).json({
+      success: true,
+      data: { _id: review._id },
+    });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      success: false,
+      message: "Error deleting review.",
+    });
+  }
+};
+
+module.exports = { addProductReview, getProductReviews, deleteProductReview };
